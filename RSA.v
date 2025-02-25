@@ -26,4 +26,26 @@ match b with
 | S x => mult a (exp a x)
 end.
 
+Fixpoint min(a b : N): N :=
+match a with
+| O => O
+| S x => (
+	match b with 
+	| O => O 
+	| S y => S (min x y) 
+	end)
+end.
+
+Compute min (S O) (S (S O)).
+
+Fixpoint max(a b : N): N :=
+match a with
+| O => b
+| S x => (
+	match b with
+	| O => O
+	| S y => S (max x y)
+	end
+)
+end.
 
