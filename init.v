@@ -161,9 +161,9 @@ reflexivity.
 	Summary of discussion:
 	alternate project is proof of a mathematical formula
 	but this project is questionable
-	if this is done, use inductive hypothesis to do it
-	IH needs to be superset of reachable states to prove safety
-
+	if this is done, use inductive invariant to do it
+	II needs to be superset of reachable states to prove safety
+	II needs to be a subset of reachable states to prove liveness
 
 *)
 
