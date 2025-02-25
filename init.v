@@ -157,4 +157,14 @@ reflexivity.
 *)
 
 
+(*
+	Summary of discussion:
+	alternate project is proof of a mathematical formula
+	but this project is questionable
+	if this is done, use inductive hypothesis to do it
+	IH needs to be superset of reachable states to prove safety
+
+
+*)
+
 
