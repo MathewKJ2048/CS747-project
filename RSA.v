@@ -49,3 +49,9 @@ match a with
 )
 end.
 
+Fixpoint sub(a b : N): N :=
+match b with
+| O => O
+| S x => match a with O => O | S y => sub y x end
+end.
+
