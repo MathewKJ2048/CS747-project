@@ -49,9 +49,19 @@ match a with
 )
 end.
 
+(*a-b*)
 Fixpoint sub(a b : N): N :=
 match b with
-| O => O
-| S x => match a with O => O | S y => sub y x end
+| O => a
+| S y => match a with O => O | S x => sub x y end
 end.
+
+
+Fixpoint equals(a b: N): bool :=
+match a with
+| O => match b with | O => true | _ => false end
+| S x => match b with S y => equals x y | _ => false end
+end.
+
+Compute equals (S O) (S O).
 
