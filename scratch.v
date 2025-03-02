@@ -503,8 +503,9 @@ reflexivity.
 reflexivity.
 reflexivity.
 reflexivity.
+Qed.
 
-Theorem sanity: forall l :letter, letter_comparison l l = Eq.
+Theorem letter_comparison_Eq: forall l :letter, letter_comparison l l = Eq.
 Proof.
 intro.
 destruct l.
@@ -513,6 +514,7 @@ reflexivity.
 reflexivity.
 reflexivity.
 reflexivity.
+Qed.
 
 Definition modifier_comparison(m1 m2:modifier): comparison :=
 match m1, m2 with
@@ -525,36 +527,26 @@ match m1, m2 with
 | Minus, Minus => Eq
 end.
 
-Definition extract_letter(g: grade):letter :=
-match g with
-| Grade l _ => l
-end.
-
-Definition extract_modifier(g: grade):modifier :=
-match g with
-| Grade _ m => m
-end.
 
 Definition grade_comparison(g1 g2: grade): comparison :=
-match 
-letter_comparison 
-(extract_letter g1) (extract_letter g2) 
-with
-| Eq => 
-modifier_comparison 
-(extract_modifier g1) (extract_modifier g2)
-| c => c
+match g1, g2 with
+| Grade l1 m1, Grade l2 m2 => 
+match letter_comparison l1 l2 with
+  | Eq => modifier_comparison m1 m2
+  | c => c end
 end.
 
 Example test_grade_comparison1 :
   (grade_comparison (Grade A Minus) (Grade B Plus)) = Gt.
 Proof.
 reflexivity.
+Qed.
 
 Example test_grade_comparison3 :
   (grade_comparison (Grade F Plus) (Grade F Plus)) = Eq.
 Proof.
 reflexivity.
+Qed.
 
 Definition lower_letter(l:letter): letter :=
 match l with
@@ -587,25 +579,56 @@ simpl.
 intro.
 rewrite <- H.
 reflexivity.
+Qed.
 
 
-Definition lower_grade (g : grade) : grade :=
+
+Definition lower_grade(g : grade) : grade :=
 match g with
-| Grade F Minus => Grade F Minus
-| _ => match extract_modifier g with
-  | Minus => Grade (lower_letter (extract_letter g)) (Plus)
-  | Plus => Grade (extract_letter g) (Natural)
-  | Natural => Grade (extract_letter g) (Minus)
+| Grade l m => match l, m with
+  | F, Minus => Grade F Minus
+  | g, Minus => Grade (lower_letter g) Plus
+  | g, Plus => Grade g Natural
+  | g, Natural => Grade g Minus
   end
 end.
 
-Compute lower_grade (Grade B Plus).
+Compute lower_grade (Grade F Minus).
 
 
 Theorem lower_grade_F_Minus : lower_grade (Grade F Minus) = (Grade F Minus).
 Proof.
 simpl.
 reflexivity.
+Qed.
+
+Check letter_comparison_Eq.
+
+
+Theorem Natural_case: forall (l:letter), grade_comparison (lower_grade (Grade l Natural) ) (Grade l Natural)  = Lt.
+Proof.
+intro.
+simpl.
+destruct l.
+reflexivity.
+reflexivity.
+reflexivity.
+reflexivity.
+reflexivity.
+Qed.
+
+Theorem Plus_case: forall (l:letter), grade_comparison (lower_grade (Grade l Plus) ) (Grade l Plus) = Lt.
+Proof.
+intro.
+simpl.
+destruct l.
+reflexivity.
+reflexivity.
+reflexivity.
+reflexivity.
+reflexivity.
+Qed.
+
 
 Theorem lower_grade_lowers :
   forall (g : grade),
@@ -613,7 +636,70 @@ Theorem lower_grade_lowers :
     grade_comparison (lower_grade g) g = Lt.
 Proof.
 intro.
-unfold grade_comparison.
+destruct g.
+destruct m.
+rewrite -> Plus_case.
+reflexivity.
+rewrite -> Natural_case.
+reflexivity.
+simpl.
+destruct l.
+reflexivity.
+reflexivity.
+reflexivity.
+reflexivity.
+simpl.
+intro.
+rewrite <- H.
+reflexivity.
+Qed.
+
+Notation "x <? y" := (ltb x y) (at level 70) : nat_scope.
+
+Definition apply_late_policy (late_days : nat) (g : grade) : grade :=
+  if late_days <? 9 then g
+  else if late_days <? 17 then lower_grade g
+  else if late_days <? 21 then lower_grade (lower_grade g)
+  else lower_grade (lower_grade (lower_grade g)).
+
+
+Theorem apply_late_policy_unfold :
+  forall (late_days : nat) (g : grade),
+    (apply_late_policy late_days g)
+    =
+    (if late_days <? 9 then g else
+       if late_days <? 17 then lower_grade g
+       else if late_days <? 21 then lower_grade (lower_grade g)
+            else lower_grade (lower_grade (lower_grade g))).
+Proof.
+  intros. reflexivity.
+Qed.
+
+Theorem no_penalty_for_mostly_on_time :
+  forall (late_days : nat) (g : grade),
+    (late_days <? 9 = true) ->
+    apply_late_policy late_days g = g.
+Proof.
+intros.
+unfold apply_late_policy.
+rewrite -> H.
+reflexivity.
+Qed.
+
+Theorem grade_lowered_once :
+  forall (late_days : nat) (g : grade),
+    (late_days <? 9 = false) ->
+    (late_days <? 17 = true) ->
+    (apply_late_policy late_days g) = (lower_grade g).
+Proof.
+intros.
+unfold apply_late_policy.
+rewrite -> H.
+rewrite -> H0.
+reflexivity.
+Qed.
+
+
 
 
 
