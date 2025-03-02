@@ -1,0 +1,9 @@
+simpl.
+reflexivity.
+induction.
+intros. revert.
+rewrite.
+assert.
+destruct.
+apply.
+replace.
