@@ -438,7 +438,7 @@ Fixpoint normalize (b:bin) : bin :=
 match b with
 | Z => Z
 | B0 x => double_bin (normalize x)
-| B1 x => B1 x
+| B1 x => incr (double_bin (normalize x))
 end.
 
 Compute (normalize (B0 (B1 Z))).
@@ -507,9 +507,25 @@ reflexivity.
 }
 {
   rewrite -> ocase.
+  assert (forall n, S n = n + 1).
+  {
+  intro.
+  induction n.
+  reflexivity.
   simpl.
-  
+  rewrite <- IHn.
+  reflexivity.
+  }
+  rewrite <- H.
+  rewrite <- zcase.
+  simpl.
+  rewrite add_0_r_firsttry.
+  rewrite <- double_plus.
+  rewrite zcase2.
+  rewrite IHb.
+  reflexivity.
 }
+Qed.
 
 
 (*
