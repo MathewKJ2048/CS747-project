@@ -335,5 +335,188 @@ rewrite add_assoc.
 reflexivity.
 Qed.
 
+Inductive bin : Type :=
+  | Z
+  | B0 (n : bin)
+  | B1 (n : bin).
+
+Fixpoint bin_to_nat(m: bin) : nat :=
+match m with
+| Z => 0
+| B0 t => 2*bin_to_nat(t)
+| B1 t => (2*bin_to_nat(t))+1
+end.
+
+Fixpoint incr(m: bin) : bin :=
+match m with
+| Z => B1 Z
+| B0 t => B1 t
+| B1 t => B0 (incr (t))
+end.
+
+Compute incr(B1 (B1 Z)).
+
+Theorem bin_to_nat_pres_incr : forall b : bin,
+  bin_to_nat (incr b) = 1 + bin_to_nat b.
+Proof.
+assert (H: forall t, t+1 = S t).
+{
+	intro.
+	induction t.
+	reflexivity.
+	simpl.
+	rewrite IHt.
+	reflexivity.
+}
+intro b.
+induction b.
+reflexivity.
+simpl.
+rewrite add_0_r_firsttry.
+specialize (H (bin_to_nat b + bin_to_nat b)) as Hb.
+rewrite Hb.
+reflexivity.
+simpl.
+rewrite IHb.
+simpl.
+rewrite add_0_r_firsttry.
+specialize (H (bin_to_nat b)) as Hb.
+rewrite <- Hb.
+rewrite add_assoc.
+reflexivity.
+Qed.
+
+Fixpoint nat_to_bin (n:nat) : bin :=
+match n with
+| 0 => Z
+| S x => incr(nat_to_bin x)
+end.
+
+Theorem nat_bin_nat : forall n, bin_to_nat (nat_to_bin n) = n.
+Proof.
+intro n.
+induction n.
+reflexivity.
+simpl.
+rewrite bin_to_nat_pres_incr.
+simpl.
+rewrite IHn.
+reflexivity.
+Qed.
+
+Compute nat_to_bin 016.
+
+Lemma double_incr : forall n : nat, double (S n) = S (S (double n)).
+Proof.
+intros.
+induction n.
+reflexivity.
+rewrite IHn.
+simpl.
+reflexivity.
+Qed.
+
+Definition double_bin (b:bin) : bin :=
+match b with
+| Z => Z
+| b' => B0 b'
+end.
+
+Lemma double_incr_bin : forall b,
+    double_bin (incr b) = incr (incr (double_bin b)).
+Proof.
+intros.
+induction b.
+reflexivity.
+simpl.
+reflexivity.
+simpl.
+reflexivity.
+Qed.
+
+Fixpoint normalize (b:bin) : bin :=
+match b with
+| Z => Z
+| B0 x => double_bin (normalize x)
+| B1 x => B1 x
+end.
+
+Compute (normalize (B0 (B1 Z))).
+
+
+
+Check double_incr_bin.
+Check double_incr.
+Check bin_to_nat_pres_incr.
+Check double_plus.
+
+Lemma btnpi: forall b:bin, bin_to_nat(incr b) = S (bin_to_nat b).
+Proof.
+intro.
+assert (forall n, S n = 1 + n).
+{
+  simpl.
+  reflexivity.
+}
+rewrite H.
+apply bin_to_nat_pres_incr.
+Qed.
+
+
+Lemma zcase: forall b: bin, bin_to_nat(B0 b) = double (bin_to_nat b).
+Proof.
+intro.
+simpl.
+rewrite add_0_r_firsttry.
+rewrite double_plus.
+reflexivity.
+Qed.
+
+Lemma zcase2: forall n:nat, nat_to_bin(double n) = double_bin (nat_to_bin n).
+Proof.
+intro.
+induction n.
+reflexivity.
+rewrite double_incr.
+simpl.
+rewrite double_incr_bin.
+rewrite IHn.
+reflexivity.
+Qed.
+
+Lemma ocase: forall b: bin, bin_to_nat(B1 b) = double(bin_to_nat b)+1.
+Proof.
+intro.
+simpl.
+rewrite add_0_r_firsttry.
+rewrite double_plus.
+reflexivity.
+Qed.
+
+Theorem bin_nat_bin : forall b, nat_to_bin (bin_to_nat b) = normalize b.
+Proof.
+intros.
+induction b.
+reflexivity.
+{
+  rewrite -> zcase.
+  simpl.
+  rewrite -> zcase2.
+  rewrite IHb.
+  reflexivity.
+}
+{
+  rewrite -> ocase.
+  simpl.
+  
+}
+
+
+(*
+simpl.
+rewrite <- IHb.
+rewrite -> add_0_r_firsttry.
+rewrite <- double_semantics.
+*)
 
 
