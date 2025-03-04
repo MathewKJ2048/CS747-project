@@ -177,7 +177,7 @@ match s1 with
   end
 end.
 
-Example test_included2: included [1;2;2] [2;1;4;1] = false.
+
 
 Theorem equality : forall n, eqb n n = true.
 Proof.
@@ -276,8 +276,271 @@ reflexivity.
 Qed.
 
 
+Check nat.
+
+
+Search (rev).
+Search (_ + _ = _ + _).
+
+Theorem app_nil_r : forall l : natlist,
+  l ++ [] = l.
+Proof.
+induction l.
+reflexivity.
+simpl.
+rewrite IHl.
+reflexivity.
+Qed.
+
+Theorem rev_app_distr: forall l1 l2 : natlist,
+  rev (l1 ++ l2) = rev l2 ++ rev l1.
+Proof.
+intros.
+induction l1.
+simpl.
+rewrite app_nil_r.
+reflexivity.
+simpl.
+rewrite IHl1.
+rewrite app_assoc.
+reflexivity.
+Qed.
+
+Theorem rev_involutive : forall l : natlist,
+  rev (rev l) = l.
+Proof.
+intros.
+induction l.
+reflexivity.
+simpl.
+rewrite rev_app_distr.
+simpl.
+rewrite IHl.
+reflexivity.
+Qed.
+
+Theorem app_assoc4 : forall l1 l2 l3 l4 : natlist,
+  l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4.
+Proof.
+induction l1.
+simpl.
+intros.
+rewrite app_assoc.
+reflexivity.
+simpl.
+intros.
+rewrite IHl1.
+reflexivity.
+Qed.
+
+Lemma nonzeros_app : forall l1 l2 : natlist,
+  nonzeros (l1 ++ l2) = (nonzeros l1) ++ (nonzeros l2).
+Proof.
+intros.
+induction l1.
+reflexivity.
+simpl.
+destruct n.
+apply IHl1.
+simpl.
+rewrite IHl1.
+reflexivity.
+Qed.
+
+Fixpoint eqblist (l1 l2 : natlist) : bool :=
+match l1, l2 with
+| nil, nil => true
+| x::la, y::lb => (eqb x y) && (eqblist la lb)
+| _, _ => false
+end.
+
+Compute eqblist [1;2;3] [1;2].
+
+Search (eqb _ _).
+
+Theorem eqblist_refl : forall l:natlist,
+  true = eqblist l l.
+Proof.
+intros.
+induction l.
+reflexivity.
+simpl.
+rewrite equality.
+rewrite <- IHl.
+reflexivity.
+Qed.
+
+
+Theorem plus_1_S: forall t, (t+1=S t).
+Proof.
+induction t.
+    reflexivity.
+    simpl.
+    rewrite IHt.
+    reflexivity.
+    Qed.
+
+Theorem count_member_nonzero : forall (s : bag),
+  1 <=? (count 1 (1 :: s)) = true.
+Proof.
+assert (forall t, match t+1 with | 0 => false | S _ => true end = true).
+{
+  intros.
+  rewrite plus_1_S.
+  reflexivity.
+}
+intro.
+simpl.
+rewrite H.
+reflexivity.
+Qed.
+
+Theorem leb_n_Sn : forall n,
+  n <=? (S n) = true.
+Proof.
+intros.
+induction n.
+reflexivity.
+simpl.
+apply IHn.
+Qed.
+
+Search (_ + 1).
+
+Theorem add_zero: forall t, t+0=t.
+Proof.
+intros.
+induction t.
+reflexivity.
+simpl.
+rewrite IHt.
+reflexivity.
+Qed.
+
+Theorem remove_does_not_increase_count: forall (s : bag),
+  (count 0 (remove_one 0 s)) <=? (count 0 s) = true.
+Proof.
+intros.
+induction s.
+reflexivity.
+destruct n.
+simpl.
+rewrite plus_1_S.
+rewrite leb_n_Sn.
+reflexivity.
+simpl.
+rewrite -> add_zero.
+rewrite -> add_zero.
+apply IHs.
+Qed.
+
+Theorem involution_injective : forall (f : nat -> nat),
+    (forall n : nat, n = f (f n)) -> (forall n1 n2 : nat, f n1 = f n2 -> n1 = n2).
+Proof.
+intros.
+specialize (H n1) as H1.
+specialize (H n2) as H2.
+rewrite H1.
+rewrite H2.
+rewrite H0.
+reflexivity.
+Qed.
+
+Search (rev (rev _)).
+
+Theorem rev_injective : forall (l1 l2 : natlist),
+  rev l1 = rev l2 -> l1 = l2.
+Proof.
+intros.
+specialize (rev_involutive l1).
+specialize (rev_involutive l2).
+intros.
+rewrite <- H0.
+rewrite <- H1.
+rewrite H.
+reflexivity.
+Qed.
+
+Inductive natoption : Type :=
+  | Some (n : nat)
+  | None.
+
+Fixpoint nth (l:natlist) (n:nat) : natoption :=
+match l with
+| nil => None
+| x::l' => match n with
+  | 0 => Some x
+  | S n' => nth l' n'
+end
+end.
+
+Definition option_elim (d : nat) (o : natoption) : nat :=
+  match o with
+  | Some n' => n'
+  | None => d
+  end.
+
+Definition hd_error (l : natlist) : natoption :=
+match l with
+| nil => None
+| x::l' => (Some x)
+end.
+
+Theorem option_elim_hd : forall (l:natlist) (default:nat),
+  hd default l = option_elim default (hd_error l).
+Proof.
+intros.
+induction l.
+reflexivity.
+simpl.
+reflexivity.
+Qed.
+
+Inductive id : Type :=
+  | Id (n : nat).
 
 
 
+Definition eqb_id (x1 x2 : id) :=
+  match x1, x2 with
+  | Id n1, Id n2 => (n1 =? n2)
+  end.
 
+Theorem eqb_id_refl : forall x, eqb_id x x = true.
+Proof.
+intros.
+destruct x.
+simpl.
+apply equality.
+Qed.
+
+
+Inductive partial_map : Type :=
+  | empty
+  | record (i : id) (v : nat) (m : partial_map).
+
+Definition update (d : partial_map)
+                  (x : id) (value : nat)
+                  : partial_map :=
+  record x value d.
+
+Fixpoint find (x:id) (d:partial_map) : natoption :=
+match d with
+| empty => None
+| record y v d' => 
+  if (eqb_id x y) 
+  then Some v 
+  else find x d'
+end.
+
+Theorem update_neq :
+  forall (d : partial_map) (x y : id) (o: nat),
+    eqb_id x y = false -> 
+    find x (update d y o) = find x d.
+Proof.
+intros.
+simpl.
+rewrite H.
+reflexivity.
+Qed.
 
